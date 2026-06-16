@@ -126,50 +126,6 @@ void saveOperation(int blockID,
                   newComputer));
 }
 
-// Queue storing pending memory requests
-// First request added is processed first
-queue<Request> requestQueue;
-
-// Adds a new request into the queue
-void addRequest(int rid,
-                int cid,
-                int bid)
-{
-    requestQueue.push(
-        Request(rid,cid,bid));
-
-    cout<<GREEN<<"Request Added\n"<<RESET;
-}
-
-//Process Request
-
-// Processes the oldest request from the queue
-void processRequest()
-{
-    if(requestQueue.empty())
-    {
-        cout<<RED<<"No Pending Requests\n"<<RESET;
-        return;
-    }
-
-    Request r = requestQueue.front();
-
-    requestQueue.pop();
-
-    cout<<CYAN<<"\nProcessing Request\n"<<RESET;
-
-    cout<< YELLOW << "Request ID : " << RESET 
-        <<r.requestID
-        <<endl;
-
-    cout<< YELLOW << "Computer ID : " << RESET
-        <<r.computerID
-        <<endl;
-
-    cout<< YELLOW << "Block ID : " << RESET
-        <<r.blockID
-        <<endl;
-}
 
 // AVL Tree node storing a memory block
 // AVL Tree provides fast searching and insertion
@@ -386,35 +342,6 @@ void inorder(AVLNode* root)
 // Root node of AVL Tree
 AVLNode* memoryRoot = NULL;
 
-// Adds a new memory block into the AVL index
-void addMemoryBlock()
-{
-    int id;
-    int size;
-    int computer;
-
-    cout<<"Block ID : ";
-    cin>>id;
-
-    cout<<"Size : ";
-    cin>>size;
-
-    cout<<"Computer ID : ";
-    cin>>computer;
-
-    MemoryBlock block(
-        id,
-        size,
-        computer);
-
-    memoryRoot =
-        insertAVL(
-            memoryRoot,
-            block);
-
-    cout<<GREEN<<"Block Added\n"<<RESET;
-}
-
 // Searches and displays memory block details
 void searchMemoryBlock()
 {
@@ -461,6 +388,12 @@ void addComputer()
 
     cout << "Total Memory : ";
     cin >> memory;
+
+    if(computers.find(id) != computers.end())
+{
+    cout<<RED<<"Computer ID Already Exists\n"<<RESET;
+    return;
+}
 
     computers[id] =
         ComputerNode(id,memory);
@@ -526,6 +459,128 @@ public:
 priority_queue<
     FrequencyNode
 > frequencyHeap;
+
+// Queue storing pending memory requests
+// First request added is processed first
+queue<Request> requestQueue;
+
+// Adds a new request into the queue
+void addRequest(int rid,
+                int cid,
+                int bid)
+{
+    // Check if computer exists
+    if(computers.find(cid)
+       == computers.end())
+    {
+        cout<<RED
+            <<"Computer Not Found\n"
+            <<RESET;
+
+        return;
+    }
+
+    // Check if block exists
+    if(searchAVL(memoryRoot,bid)
+       == NULL)
+    {
+        cout<<RED
+            <<"Memory Block Not Found\n"
+            <<RESET;
+
+        return;
+    }
+
+    requestQueue.push(
+        Request(rid,cid,bid));
+
+    cout<<GREEN
+        <<"Request Added\n"
+        <<RESET;
+}
+
+//Process Request
+
+// Processes the oldest request from the queue
+void processRequest()
+{
+    if(requestQueue.empty())
+    {
+        cout<<RED
+            <<"No Pending Requests\n"
+            <<RESET;
+
+        return;
+    }
+
+    Request r =
+        requestQueue.front();
+
+    requestQueue.pop();
+
+    AVLNode* block =
+        searchAVL(memoryRoot,
+                  r.blockID);
+
+    if(block == NULL)
+    {
+        cout<<RED
+            <<"Memory Block Missing\n"
+            <<RESET;
+
+        return;
+    }
+
+    // Increase access frequency
+    block->block.frequency++;
+
+    frequencyHeap.push(
+        FrequencyNode(
+            block->block.frequency,
+            block->block.blockID
+        )
+    );
+
+    cout<<CYAN
+        <<"\nProcessing Request\n"
+        <<RESET;
+
+    cout<<YELLOW
+        <<"Request ID : "
+        <<RESET
+        <<r.requestID
+        <<endl;
+
+    cout<<YELLOW
+        <<"Computer ID : "
+        <<RESET
+        <<r.computerID
+        <<endl;
+
+    cout<<YELLOW
+        <<"Block ID : "
+        <<RESET
+        <<r.blockID
+        <<endl;
+
+    cout<<GREEN
+        <<"\nAccess Granted\n"
+        <<RESET;
+
+    cout<<"Computer "
+        <<r.computerID
+        <<" accessed Block "
+        <<r.blockID
+        <<endl;
+
+    cout<<"Block Stored At Computer "
+        <<block->block.storedComputer
+        <<endl;
+
+    cout<<"Access Frequency : "
+        <<block->block.frequency
+        <<endl;
+}
 
 // Records block access and updates frequency
 void accessMemoryBlock()
@@ -743,6 +798,12 @@ void allocateMemory()
     cout<<"Block ID : ";
     cin>>blockID;
 
+    if(searchAVL(memoryRoot,blockID) != NULL)
+{
+    cout<<RED<<"Block ID Already Exists\n"<<RESET;
+    return;
+}
+
     cout<<"Block Size : ";
     cin>>blockSize;
 
@@ -821,16 +882,33 @@ void moveBlock()
         return;
     }
 
-    int oldComputer =
-        block->block.storedComputer;
+    if(computers[newComputer].freeMemory < block->block.size)
+{
+    cout<<RED
+        <<"Not Enough Memory In Destination Computer\n"
+        <<RESET;
 
-    saveOperation(
-        blockID,
-        oldComputer,
-        newComputer);
+    return;
+}
+
+   int oldComputer =
+    block->block.storedComputer;
+
+// Release memory from old computer
+computers[oldComputer].freeMemory
+    += block->block.size;
+
+// Consume memory in new computer
+computers[newComputer].freeMemory
+    -= block->block.size;
+
+saveOperation(
+    blockID,
+    oldComputer,
+    newComputer);
 
     block->block.storedComputer =
-        newComputer;
+    newComputer;
 
     cout<<GREEN<<"Block Moved Successfully\n"<<RESET;
 }
@@ -853,11 +931,17 @@ void undoOperation()
         searchAVL(memoryRoot,
                   op.blockID);
 
-    if(block != NULL)
-    {
-        block->block.storedComputer =
-            op.oldComputer;
-    }
+if(block != NULL)
+{
+    computers[op.newComputer].freeMemory
+        += block->block.size;
+
+    computers[op.oldComputer].freeMemory
+        -= block->block.size;
+
+    block->block.storedComputer =
+        op.oldComputer;
+}
 
     cout<<GREEN<<"\nRollback Successful\n"<<RESET;
 
