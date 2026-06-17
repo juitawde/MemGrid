@@ -142,13 +142,13 @@ Use Dijkstra's Algorithm to find minimum-latency communication paths.
 ## 🔨 Compile
 
 ```bash
-g++ memgrid.cpp -o memgrid
+g++ system.cpp -o system
 ```
 
 ## ▶️ Run
 
 ```bash
-./memgrid
+./system
 ```
 
 ## 📋 Available Operations
@@ -260,15 +260,21 @@ Block restored to previous computer
 
 <img width="1401" height="592" alt="Screenshot 2026-06-17 at 3 53 07 AM" src="https://github.com/user-attachments/assets/b23c0313-ecf0-4044-95d8-982dbd8eff2f" />
 
+
 <img width="1386" height="251" alt="Screenshot 2026-06-17 at 3 53 39 AM" src="https://github.com/user-attachments/assets/cbb264e6-253d-48c5-bf00-9e5b4d96b196" />
+
 
 <img width="1376" height="588" alt="Screenshot 2026-06-17 at 3 54 26 AM" src="https://github.com/user-attachments/assets/8c2f153d-9d56-46b6-969c-ce228faf335d" />
 
+
 <img width="1404" height="624" alt="Screenshot 2026-06-17 at 3 55 19 AM" src="https://github.com/user-attachments/assets/cad56a1f-842c-4a1c-bb11-79889b259181" />
+
 
 <img width="1366" height="607" alt="Screenshot 2026-06-17 at 3 56 09 AM" src="https://github.com/user-attachments/assets/9b748f4d-0dd6-4027-8bf2-8b47b06751a5" />
 
+
 <img width="1195" height="652" alt="Screenshot 2026-06-17 at 4 20 18 AM" src="https://github.com/user-attachments/assets/efefff0a-08ed-48f8-9e86-08877db00e19" />
+
 
 <img width="1187" height="670" alt="Screenshot 2026-06-17 at 4 49 35 AM" src="https://github.com/user-attachments/assets/ca79da02-e50e-4e14-9a55-cdcd57897f5f" />
 
