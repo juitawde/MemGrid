@@ -7,15 +7,15 @@
 #include <algorithm>
 #include <climits>
 
-//for colors
-#define RESET   "\033[0m"
-#define RED     "\033[31m"
-#define GREEN   "\033[32m"
-#define YELLOW  "\033[33m"
-#define BLUE    "\033[34m"
+// for colors
+#define RESET "\033[0m"
+#define RED "\033[31m"
+#define GREEN "\033[32m"
+#define YELLOW "\033[33m"
+#define BLUE "\033[34m"
 #define MAGENTA "\033[35m"
-#define CYAN    "\033[36m"
-#define BOLD    "\033[1m"
+#define CYAN "\033[36m"
+#define BOLD "\033[1m"
 
 using namespace std;
 
@@ -35,6 +35,8 @@ public:
         freeMemory = 0;
     }
 
+    // parameterized constructor to initialize computer node with ID and memory
+    // constructor is a special member function that is automatically called when an object of the class is created
     ComputerNode(int id, int memory)
     {
         computerID = id;
@@ -61,6 +63,7 @@ public:
         storedComputer = 0;
     }
 
+    // parameterized constructor to initialize memory block with ID, size and storage location
     MemoryBlock(int id, int s, int comp)
     {
         blockID = id;
@@ -86,6 +89,7 @@ public:
         blockID = 0;
     }
 
+    // parameterized constructor to initialize request with ID, target computer and requested block
     Request(int rid, int cid, int bid)
     {
         requestID = rid;
@@ -103,6 +107,7 @@ public:
     int oldComputer;
     int newComputer;
 
+    // parameterized constructor to initialize operation with block ID, old computer and new computer
     Operation(int b, int oldC, int newC)
     {
         blockID = b;
@@ -116,16 +121,10 @@ public:
 stack<Operation> rollbackStack;
 
 // Saves block movement details into the stack
-void saveOperation(int blockID,
-                   int oldComputer,
-                   int newComputer)
+void saveOperation(int blockID, int oldComputer, int newComputer)
 {
-    rollbackStack.push(
-        Operation(blockID,
-                  oldComputer,
-                  newComputer));
+    rollbackStack.push(Operation(blockID, oldComputer, newComputer));
 }
-
 
 // AVL Tree node storing a memory block
 // AVL Tree provides fast searching and insertion
@@ -134,11 +133,12 @@ class AVLNode
 public:
     MemoryBlock block;
 
-    AVLNode* left;
-    AVLNode* right;
+    AVLNode *left;
+    AVLNode *right;
 
     int height;
 
+    // parameterized constructor to initialize AVL node with memory block
     AVLNode(MemoryBlock b)
     {
         block = b;
@@ -151,31 +151,30 @@ public:
 };
 
 // Returns height of an AVL node
-int getHeight(AVLNode* node)
+int getHeight(AVLNode *node)
 {
-    if(node == NULL)
+    if (node == NULL)
         return 0;
 
     return node->height;
 }
 
 // Calculates AVL balance factor
-int getBalance(AVLNode* node)
+int getBalance(AVLNode *node)
 {
-    if(node == NULL)
+    if (node == NULL)
         return 0;
 
-    return getHeight(node->left)
-           -
+    return getHeight(node->left) -
            getHeight(node->right);
 }
 
 // Performs right rotation to balance AVL Tree
-AVLNode* rightRotate(AVLNode* y)
+AVLNode *rightRotate(AVLNode *y)
 {
-    AVLNode* x = y->left;
+    AVLNode *x = y->left;
 
-    AVLNode* T2 = x->right;
+    AVLNode *T2 = x->right;
 
     x->right = y;
 
@@ -183,23 +182,23 @@ AVLNode* rightRotate(AVLNode* y)
 
     y->height =
         max(getHeight(y->left),
-            getHeight(y->right))
-            + 1;
+            getHeight(y->right)) +
+        1;
 
     x->height =
         max(getHeight(x->left),
-            getHeight(x->right))
-            + 1;
+            getHeight(x->right)) +
+        1;
 
     return x;
 }
 
 // Performs left rotation to balance AVL Tree
-AVLNode* leftRotate(AVLNode* x)
+AVLNode *leftRotate(AVLNode *x)
 {
-    AVLNode* y = x->right;
+    AVLNode *y = x->right;
 
-    AVLNode* T2 = y->left;
+    AVLNode *T2 = y->left;
 
     y->left = x;
 
@@ -207,36 +206,34 @@ AVLNode* leftRotate(AVLNode* x)
 
     x->height =
         max(getHeight(x->left),
-            getHeight(x->right))
-            + 1;
+            getHeight(x->right)) +
+        1;
 
     y->height =
         max(getHeight(y->left),
-            getHeight(y->right))
-            + 1;
+            getHeight(y->right)) +
+        1;
 
     return y;
 }
 
 // Inserts a memory block into AVL Tree
 // Tree is rebalanced if required
-AVLNode* insertAVL(
-    AVLNode* root,
-    MemoryBlock block)
+AVLNode *insertAVL(AVLNode *root, MemoryBlock block)
 {
-    if(root == NULL)
+    if (root == NULL)
         return new AVLNode(block);
 
-    if(block.blockID <
-       root->block.blockID)
+    if (block.blockID <
+        root->block.blockID)
     {
         root->left =
             insertAVL(root->left,
                       block);
     }
 
-    else if(block.blockID >
-            root->block.blockID)
+    else if (block.blockID >
+             root->block.blockID)
     {
         root->right =
             insertAVL(root->right,
@@ -256,23 +253,26 @@ AVLNode* insertAVL(
     int balance =
         getBalance(root);
 
-    if(balance > 1 &&
-       block.blockID <
-       root->left->block.blockID)
+    // LL case
+    if (balance > 1 &&
+        block.blockID <
+            root->left->block.blockID)
     {
         return rightRotate(root);
     }
 
-    if(balance < -1 &&
-       block.blockID >
-       root->right->block.blockID)
+    // RR case
+    if (balance < -1 &&
+        block.blockID >
+            root->right->block.blockID)
     {
         return leftRotate(root);
     }
 
-    if(balance > 1 &&
-       block.blockID >
-       root->left->block.blockID)
+    // LR case
+    if (balance > 1 &&
+        block.blockID >
+            root->left->block.blockID)
     {
         root->left =
             leftRotate(root->left);
@@ -280,9 +280,10 @@ AVLNode* insertAVL(
         return rightRotate(root);
     }
 
-    if(balance < -1 &&
-       block.blockID <
-       root->right->block.blockID)
+    // RL Case
+    if (balance < -1 &&
+        block.blockID <
+            root->right->block.blockID)
     {
         root->right =
             rightRotate(root->right);
@@ -294,82 +295,70 @@ AVLNode* insertAVL(
 }
 
 // Searches a memory block using Block ID
-AVLNode* searchAVL(
-        AVLNode* root,
-        int blockID)
+AVLNode *searchAVL(AVLNode *root, int blockID)
 {
-    if(root == NULL)
+    if (root == NULL)
         return NULL;
 
-    if(root->block.blockID ==
-       blockID)
+    if (root->block.blockID == blockID)
     {
         return root;
     }
 
-    if(blockID <
-       root->block.blockID)
+    if (blockID < root->block.blockID)
     {
-        return searchAVL(
-                root->left,
-                blockID);
+        return searchAVL(root->left, blockID);
     }
 
-    return searchAVL(
-            root->right,
-            blockID);
+    return searchAVL(root->right, blockID);
 }
 
 // Displays memory blocks in sorted order
-void inorder(AVLNode* root)
+void inorder(AVLNode *root)
 {
-    if(root == NULL)
+    if (root == NULL)
         return;
 
     inorder(root->left);
 
-    cout<< GREEN << "Block ID : " << RESET
-        <<root->block.blockID
-        << GREEN << " | Size : " << RESET
-        <<root->block.size
-        << GREEN << " | Stored At : " << RESET
-        <<root->block.storedComputer
-        <<endl;
+    cout << GREEN << "Block ID : " << RESET << root->block.blockID
+         << GREEN << " | Size : " << RESET << root->block.size
+         << GREEN << " | Stored At : " << RESET << root->block.storedComputer
+         << endl;
 
     inorder(root->right);
 }
 
 // Root node of AVL Tree
-AVLNode* memoryRoot = NULL;
+AVLNode *memoryRoot = NULL;
 
 // Searches and displays memory block details
 void searchMemoryBlock()
 {
     int id;
 
-    cout<<"Enter Block ID : ";
-    cin>>id;
+    cout << "Enter Block ID : ";
+    cin >> id;
 
-    AVLNode* result =
-        searchAVL(
-            memoryRoot,
-            id);
+    AVLNode *result = searchAVL(memoryRoot, id);
 
-    if(result == NULL)
+    if (result == NULL)
     {
-        cout<<RED<<"Not Found\n"<<RESET;
+        cout << RED << "Not Found\n"
+             << RESET;
     }
     else
     {
-        cout<<GREEN<<"\nBlock Found\n"<<RESET;
+        cout << GREEN << "\nBlock Found\n"
+             << RESET;
 
-        cout<< GREEN << "Size : " << RESET
-            <<result->block.size
-            <<endl;
+        cout << GREEN << "Size : " << RESET
+             << result->block.size
+             << endl;
 
-        cout<< GREEN << "Stored At Computer : " << RESET
-            <<result->block.storedComputer
-            <<endl;
+        cout << GREEN << "Stored At Computer : " << RESET
+             << result->block.storedComputer
+             << endl;
     }
 }
 
@@ -389,16 +378,16 @@ void addComputer()
     cout << "Total Memory : ";
     cin >> memory;
 
-    if(computers.find(id) != computers.end())
-{
-    cout<<RED<<"Computer ID Already Exists\n"<<RESET;
-    return;
-}
+    if (computers.count(id))
+    {
+        cout << "Computer ID Already Exists";
+        return;
+    }
 
-    computers[id] =
-        ComputerNode(id,memory);
+    computers[id] = ComputerNode(id, memory);
 
-    cout<<GREEN<<"Computer Added Successfully\n"<<RESET;
+    cout << GREEN << "Computer Added Successfully\n"
+         << RESET;
 }
 
 // Verifies whether a computer exists
@@ -409,10 +398,10 @@ void verifyComputer()
     cout << "Enter Computer ID : ";
     cin >> id;
 
-    if(computers.find(id)
-        != computers.end())
+    if (computers.find(id) != computers.end())
     {
-        cout << GREEN << "\nComputer Found\n"<< RESET;
+        cout << GREEN << "\nComputer Found\n"
+             << RESET;
 
         cout << "ID : "
              << computers[id].computerID
@@ -424,7 +413,8 @@ void verifyComputer()
     }
     else
     {
-        cout<<RED<<"Computer Not Found\n"<<RESET;
+        cout << RED << "Computer Not Found\n"
+             << RESET;
     }
 }
 
@@ -433,100 +423,85 @@ void verifyComputer()
 class FrequencyNode
 {
 public:
-
     int frequency;
     int blockID;
 
-    FrequencyNode(
-        int f,
-        int b)
+    // parameterized constructor to initialize frequency node with access frequency and block ID
+    FrequencyNode(int f, int b)
     {
         frequency = f;
         blockID = b;
     }
 
-    bool operator<
-    (
-        const FrequencyNode& other
-    ) const
+    // Overloading < operator to create a max heap based on frequency
+    bool operator<(const FrequencyNode &other) const
     {
-        return frequency <
-               other.frequency;
+        return frequency < other.frequency;
     }
 };
 
 // Max Heap storing most accessed blocks
-priority_queue<
-    FrequencyNode
-> frequencyHeap;
+priority_queue<FrequencyNode> frequencyHeap;
 
 // Queue storing pending memory requests
 // First request added is processed first
 queue<Request> requestQueue;
 
 // Adds a new request into the queue
-void addRequest(int rid,
-                int cid,
-                int bid)
+void addRequest(int rid, int cid, int bid)
 {
     // Check if computer exists
-    if(computers.find(cid)
-       == computers.end())
+    if (computers.find(cid) == computers.end())
     {
-        cout<<RED
-            <<"Computer Not Found\n"
-            <<RESET;
+        cout << RED
+             << "Computer Not Found\n"
+             << RESET;
 
         return;
     }
 
     // Check if block exists
-    if(searchAVL(memoryRoot,bid)
-       == NULL)
+    if (searchAVL(memoryRoot, bid) == NULL)
     {
-        cout<<RED
-            <<"Memory Block Not Found\n"
-            <<RESET;
+        cout << RED
+             << "Memory Block Not Found\n"
+             << RESET;
 
         return;
     }
 
-    requestQueue.push(
-        Request(rid,cid,bid));
+    requestQueue.push(Request(rid, cid, bid));
 
-    cout<<GREEN
-        <<"Request Added\n"
-        <<RESET;
+    cout << GREEN
+         << "Request Added\n"
+         << RESET;
 }
 
-//Process Request
+// Process Request
 
 // Processes the oldest request from the queue
 void processRequest()
 {
-    if(requestQueue.empty())
+    if (requestQueue.empty())
     {
-        cout<<RED
-            <<"No Pending Requests\n"
-            <<RESET;
+        cout << RED
+             << "No Pending Requests\n"
+             << RESET;
 
         return;
     }
 
-    Request r =
-        requestQueue.front();
+    Request r = requestQueue.front();
 
     requestQueue.pop();
 
-    AVLNode* block =
-        searchAVL(memoryRoot,
-                  r.blockID);
+    AVLNode *block = searchAVL(memoryRoot, r.blockID);
 
-    if(block == NULL)
+    if (block == NULL)
     {
-        cout<<RED
-            <<"Memory Block Missing\n"
-            <<RESET;
+        cout << RED
+             << "Memory Block Missing\n"
+             << RESET;
 
         return;
     }
@@ -534,52 +509,47 @@ void processRequest()
     // Increase access frequency
     block->block.frequency++;
 
-    frequencyHeap.push(
-        FrequencyNode(
-            block->block.frequency,
-            block->block.blockID
-        )
-    );
+    frequencyHeap.push(FrequencyNode(block->block.frequency, block->block.blockID));
 
-    cout<<CYAN
-        <<"\nProcessing Request\n"
-        <<RESET;
+    cout << CYAN
+         << "\nProcessing Request\n"
+         << RESET;
 
-    cout<<YELLOW
-        <<"Request ID : "
-        <<RESET
-        <<r.requestID
-        <<endl;
+    cout << YELLOW
+         << "Request ID : "
+         << RESET
+         << r.requestID
+         << endl;
 
-    cout<<YELLOW
-        <<"Computer ID : "
-        <<RESET
-        <<r.computerID
-        <<endl;
+    cout << YELLOW
+         << "Computer ID : "
+         << RESET
+         << r.computerID
+         << endl;
 
-    cout<<YELLOW
-        <<"Block ID : "
-        <<RESET
-        <<r.blockID
-        <<endl;
+    cout << YELLOW
+         << "Block ID : "
+         << RESET
+         << r.blockID
+         << endl;
 
-    cout<<GREEN
-        <<"\nAccess Granted\n"
-        <<RESET;
+    cout << GREEN
+         << "\nAccess Granted\n"
+         << RESET;
 
-    cout<<"Computer "
-        <<r.computerID
-        <<" accessed Block "
-        <<r.blockID
-        <<endl;
+    cout << "Computer "
+         << r.computerID
+         << " accessed Block "
+         << r.blockID
+         << endl;
 
-    cout<<"Block Stored At Computer "
-        <<block->block.storedComputer
-        <<endl;
+    cout << "Block Stored At Computer: "
+         << block->block.storedComputer
+         << endl;
 
-    cout<<"Access Frequency : "
-        <<block->block.frequency
-        <<endl;
+    cout << "Access Frequency : "
+         << block->block.frequency
+         << endl;
 }
 
 // Records block access and updates frequency
@@ -590,58 +560,52 @@ void accessMemoryBlock()
     cout << "Enter Block ID : ";
     cin >> id;
 
-    AVLNode* block =
-        searchAVL(memoryRoot,id);
+    AVLNode *block = searchAVL(memoryRoot, id);
 
-    if(block == NULL)
+    if (block == NULL)
     {
-        cout<<RED<<"Block Not Found\n"<<RESET;
+        cout << RED << "Block Not Found\n"
+             << RESET;
         return;
     }
 
     block->block.frequency++;
 
-    frequencyHeap.push(
-        FrequencyNode(
-            block->block.frequency,
-            id
-        )
-    );
+    frequencyHeap.push(FrequencyNode(block->block.frequency, id));
 
-    cout<<GREEN<<"Access Recorded\n"<<RESET;
+    cout << GREEN << "Access Recorded\n"
+         << RESET;
 }
 
 // Displays blocks with highest access frequency
 void showMostUsedBlocks()
 {
-    if(frequencyHeap.empty())
+    if (frequencyHeap.empty())
     {
-        cout<<YELLOW<<"No Access Data\n"<<RESET;
+        cout << YELLOW << "No Access Data\n"
+             << RESET;
         return;
     }
 
-    priority_queue<
-        FrequencyNode
-    > temp = frequencyHeap;
+    priority_queue<FrequencyNode> temp = frequencyHeap;
 
-    cout<<MAGENTA<<"\nTop Accessed Blocks\n"<<RESET;
+    cout << MAGENTA << "\nTop Accessed Blocks\n"
+         << RESET;
 
     int count = 0;
 
-    while(!temp.empty()
-          && count < 10)
+    while (!temp.empty() && count < 10)
     {
-        FrequencyNode current =
-            temp.top();
+        FrequencyNode current = temp.top();
 
         temp.pop();
 
         cout
-        << "Block "
-        << current.blockID << endl
-        << " Frequency "
-        << current.frequency
-        << endl;
+            << "Block "
+            << current.blockID << endl
+            << " Frequency "
+            << current.frequency
+            << endl;
 
         count++;
     }
@@ -649,10 +613,7 @@ void showMostUsedBlocks()
 
 // Graph representing network topology
 // Nodes = Computers, Edges = Connections
-unordered_map<
-    int,
-    vector<pair<int,int>>
-> graph;
+unordered_map<int, vector<pair<int, int>>> graph;
 
 // Creates a network connection between computers
 void addConnection()
@@ -661,47 +622,46 @@ void addConnection()
     int destination;
     int latency;
 
-    cout<<"Source Computer : ";
-    cin>>source;
+    cout << "Source Computer : ";
+    cin >> source;
 
-    cout<<"Destination Computer : ";
-    cin>>destination;
+    cout << "Destination Computer : ";
+    cin >> destination;
 
-    cout<<"Latency : ";
-    cin>>latency;
+    cout << "Latency : ";
+    cin >> latency;
 
     graph[source].push_back(
-        {destination,latency});
+        {destination, latency});
 
     graph[destination].push_back(
-        {source,latency});
+        {source, latency});
 
-    cout<<GREEN<<"Connection Added\n"<<RESET;
+    cout << GREEN << "Connection Added\n"
+         << RESET;
 }
 
 // Displays all computer connections
 void displayNetwork()
 {
-    cout<<MAGENTA<<"\nCluster Topology\n"<<RESET;
+    cout << MAGENTA << "\nCluster Topology\n"
+         << RESET;
 
-    for(auto node : graph)
+    for (auto node : graph)
     {
-        cout
-        << node.first
-        << " -> ";
+        cout << node.first << " -> ";
 
-        for(auto neighbour :
-            node.second)
+        for (auto neighbour : node.second)
         {
             cout
-            << "("
-            << neighbour.first
-            << ","
-            << neighbour.second
-            << ") ";
+                << "("
+                << neighbour.first
+                << ","
+                << neighbour.second
+                << ") ";
         }
 
-        cout<<endl;
+        cout << endl;
     }
 }
 
@@ -711,80 +671,61 @@ void shortestPath()
     int source;
     int destination;
 
-    cout<<"Source : ";
-    cin>>source;
+    cout << "Source : ";
+    cin >> source;
 
-    cout<<"Destination : ";
-    cin>>destination;
+    cout << "Destination : ";
+    cin >> destination;
 
-    unordered_map<int,int> distance;
+    unordered_map<int, int> distance;
 
-    for(auto node : graph)
+    for (auto node : graph)
     {
-        distance[node.first] =
-            INT_MAX;
+        distance[node.first] = INT_MAX;
     }
 
-    priority_queue
-    <
-        pair<int,int>,
-        vector<pair<int,int>>,
-        greater<pair<int,int>>
-    > pq;
+    priority_queue<pair<int, int>, vector<pair<int, int>>, greater<pair<int, int>>> pq;
 
     distance[source] = 0;
 
-    pq.push({0,source});
+    pq.push({0, source});
 
-    while(!pq.empty())
+    while (!pq.empty())
     {
-        int currentDistance =
-            pq.top().first;
+        int currentDistance = pq.top().first;
 
-        int currentNode =
-            pq.top().second;
+        int currentNode = pq.top().second;
 
         pq.pop();
 
-        for(auto neighbour :
-            graph[currentNode])
+        for (auto neighbour : graph[currentNode])
         {
-            int nextNode =
-                neighbour.first;
+            int nextNode = neighbour.first;
 
-            int weight =
-                neighbour.second;
+            int weight = neighbour.second;
 
-            if(currentDistance
-               + weight
-               <
-               distance[nextNode])
+            if (currentDistance + weight < distance[nextNode])
             {
-                distance[nextNode]
-                =
-                currentDistance
-                + weight;
+                distance[nextNode] = currentDistance + weight;
 
                 pq.push(
-                {
-                    distance[nextNode],
-                    nextNode
-                });
+                    {distance[nextNode], nextNode});
             }
         }
     }
 
-    if(distance[destination]
-       == INT_MAX)
+    if (distance[destination] == INT_MAX)
     {
-        cout<<RED<<"No Path Found\n"<<RESET;
+        cout << RED << "No Path Found\n"
+             << RESET;
     }
     else
     {
-        cout << GREEN 
-        << "\nMinimum Latency = "
-        << distance[destination]
-        << endl << RESET;
+        cout << GREEN
+             << "\nMinimum Latency = "
+             << distance[destination]
+             << endl
+             << RESET;
     }
 }
 
@@ -795,61 +736,53 @@ void allocateMemory()
     int blockID;
     int blockSize;
 
-    cout<<"Block ID : ";
-    cin>>blockID;
+    cout << "Block ID : ";
+    cin >> blockID;
 
-    if(searchAVL(memoryRoot,blockID) != NULL)
-{
-    cout<<RED<<"Block ID Already Exists\n"<<RESET;
-    return;
-}
+    if (searchAVL(memoryRoot, blockID) != NULL)
+    {
+        cout << RED << "Block ID Already Exists\n"
+             << RESET;
+        return;
+    }
 
-    cout<<"Block Size : ";
-    cin>>blockSize;
+    cout << "Block Size : ";
+    cin >> blockSize;
 
     int bestComputer = -1;
     int minimumWaste = INT_MAX;
 
-    for(auto &computer : computers)
+    for (auto &computer : computers)
     {
-        int freeSpace =
-            computer.second.freeMemory;
+        int freeSpace = computer.second.freeMemory;
 
-        if(freeSpace >= blockSize)
+        if (freeSpace >= blockSize)
         {
-            int waste =
-                freeSpace - blockSize;
+            int waste = freeSpace - blockSize;
 
-            if(waste < minimumWaste)
+            if (waste < minimumWaste)
             {
                 minimumWaste = waste;
-                bestComputer =
-                    computer.first;
+                bestComputer = computer.first;
             }
         }
     }
 
-    if(bestComputer == -1)
+    if (bestComputer == -1)
     {
-        cout<<RED<<"No Computer Has Enough Memory\n"<<RESET;
+        cout << RED << "No Computer Has Enough Memory\n"
+             << RESET;
         return;
     }
 
-    computers[bestComputer].freeMemory
-        -= blockSize;
+    computers[bestComputer].freeMemory -= blockSize;
 
-    MemoryBlock block(
-        blockID,
-        blockSize,
-        bestComputer);
+    MemoryBlock block(blockID, blockSize, bestComputer);
 
-    memoryRoot =
-        insertAVL(memoryRoot,
-                  block);
+    memoryRoot = insertAVL(memoryRoot, block);
 
-    cout<<GREEN << "\nAllocated To Computer "
-        <<bestComputer
-        <<endl<< RESET;
+    cout << GREEN << "\nAllocated To Computer " << bestComputer << endl
+         << RESET;
 }
 
 // Moves a memory block to another computer
@@ -859,125 +792,114 @@ void moveBlock()
     int blockID;
     int newComputer;
 
-    cout<<"Block ID : ";
-    cin>>blockID;
+    cout << "Block ID : ";
+    cin >> blockID;
 
-    cout<<"New Computer ID : ";
-    cin>>newComputer;
+    cout << "New Computer ID : ";
+    cin >> newComputer;
 
-    AVLNode* block =
-        searchAVL(memoryRoot,
-                  blockID);
+    AVLNode *block = searchAVL(memoryRoot, blockID);
 
-    if(block == NULL)
+    if (block == NULL)
     {
-        cout<<RED<<"Block Not Found\n"<<RESET;
+        cout << RED << "Block Not Found\n"
+             << RESET;
         return;
     }
 
-    if(computers.find(newComputer)
-       == computers.end())
+    if (computers.find(newComputer) == computers.end())
     {
-        cout<<RED <<"Computer Not Found\n"<< RESET;
+        cout << RED << "Computer Not Found\n"
+             << RESET;
         return;
     }
 
-    if(computers[newComputer].freeMemory < block->block.size)
-{
-    cout<<RED
-        <<"Not Enough Memory In Destination Computer\n"
-        <<RESET;
+    if (computers[newComputer].freeMemory < block->block.size)
+    {
+        cout << RED
+             << "Not Enough Memory In Destination Computer\n"
+             << RESET;
 
-    return;
-}
+        return;
+    }
 
-   int oldComputer =
-    block->block.storedComputer;
+    int oldComputer = block->block.storedComputer;
 
-// Release memory from old computer
-computers[oldComputer].freeMemory
-    += block->block.size;
+    // Release memory from old computer
+    computers[oldComputer].freeMemory += block->block.size;
 
-// Consume memory in new computer
-computers[newComputer].freeMemory
-    -= block->block.size;
+    // Consume memory in new computer
+    computers[newComputer].freeMemory -= block->block.size;
 
-saveOperation(
-    blockID,
-    oldComputer,
-    newComputer);
+    saveOperation(blockID, oldComputer, newComputer);
 
-    block->block.storedComputer =
-    newComputer;
+    block->block.storedComputer = newComputer;
 
-    cout<<GREEN<<"Block Moved Successfully\n"<<RESET;
+    cout << GREEN << "Block Moved Successfully\n"
+         << RESET;
 }
 
 // Restores the most recent block movement
 void undoOperation()
 {
-    if(rollbackStack.empty())
+    if (rollbackStack.empty())
     {
-        cout<<YELLOW<<"Nothing To Undo\n"<<RESET;
+        cout << YELLOW << "Nothing To Undo\n"
+             << RESET;
         return;
     }
 
-    Operation op =
-        rollbackStack.top();
+    Operation op = rollbackStack.top();
 
     rollbackStack.pop();
 
-    AVLNode* block =
-        searchAVL(memoryRoot,
-                  op.blockID);
+    AVLNode *block = searchAVL(memoryRoot, op.blockID);
 
-if(block != NULL)
-{
-    computers[op.newComputer].freeMemory
-        += block->block.size;
+    if (block != NULL)
+    {
+        computers[op.newComputer].freeMemory += block->block.size;
 
-    computers[op.oldComputer].freeMemory
-        -= block->block.size;
+        computers[op.oldComputer].freeMemory -= block->block.size;
 
-    block->block.storedComputer =
-        op.oldComputer;
-}
+        block->block.storedComputer = op.oldComputer;
+    }
 
-    cout<<GREEN<<"\nRollback Successful\n"<<RESET;
+    cout << GREEN << "\nRollback Successful\n"
+         << RESET;
 
-    cout<<"Block "
-        <<op.blockID
-        <<" restored to Computer "
-        <<op.oldComputer
-        <<endl;
+    cout << "Block "
+         << op.blockID
+         << " restored to Computer "
+         << op.oldComputer
+         << endl;
 }
 
 // Displays all computers and memory information
 void displayComputers()
 {
-    cout<<MAGENTA<<"\nCluster Computers\n"<<RESET;
+    cout << MAGENTA << "\nCluster Computers\n"
+         << RESET;
 
-    for(auto computer :
-        computers)
+    for (auto computer : computers)
     {
         cout
-        <<BLUE << "ID : "<<RESET
-        <<computer.second.computerID<<endl
+            << BLUE << "ID : " << RESET
+            << computer.second.computerID << endl
 
-        <<YELLOW << " Memory : "<< RESET
-        <<computer.second.totalMemory<<endl
+            << YELLOW << " Memory : " << RESET
+            << computer.second.totalMemory << endl
 
-        <<CYAN << " Free : " << RESET
-        <<computer.second.freeMemory
+            << CYAN << " Free : " << RESET
+            << computer.second.freeMemory
 
-        <<endl;
+            << endl;
     }
 }
 
 // Displays all memory blocks from AVL Tree
 void displayMemoryBlocks()
 {
-    cout<<MAGENTA<<"\nMemory Index\n"<<RESET;
+    cout << MAGENTA << "\nMemory Index\n" << RESET;
 
     inorder(memoryRoot);
 }
@@ -986,43 +908,40 @@ void displayMemoryBlocks()
 void menu()
 {
     // cout<<"\n";
-    cout<<CYAN;
-    cout<<"====================================\n";
-    cout<<"           MemGrid Menu             \n";
-    cout<<"====================================\n";
-    cout<<RESET;
+    cout << CYAN;
+    cout << "====================================\n";
+    cout << "           MemGrid Menu             \n";
+    cout << "====================================\n";
+    cout << RESET;
 
-    cout<<"1. Add Computer\n";
-    cout<<"2. Verify Computer\n";
+    cout << "1. Add Computer\n";
+    cout << "2. Verify Computer\n";
 
-    cout<<"3. Allocate Memory Block\n";
-    cout<<"4. Search Memory Block\n";
+    cout << "3. Allocate Memory Block\n";
+    cout << "4. Search Memory Block\n";
 
-    cout<<"5. Display Memory Blocks\n";
+    cout << "5. Display Memory Blocks\n";
 
-    cout<<"6. Move Memory Block\n";
-    cout<<"7. Undo Last Move\n";
+    cout << "6. Move Memory Block\n";
+    cout << "7. Undo Last Move\n";
 
-    cout<<"8. Add Request\n";
-    cout<<"9. Process Request\n";
+    cout << "8. Add Request\n";
+    cout << "9. Process Request\n";
 
-    cout<<"10. Access Memory Block\n";
-    cout<<"11. Show Most Used Blocks\n";
+    cout << "10. Access Memory Block\n";
+    cout << "11. Show Most Used Blocks\n";
 
-    cout<<"12. Add Network Connection\n";
-    cout<<"13. Display Network\n";
+    cout << "12. Add Network Connection\n";
+    cout << "13. Display Network\n";
 
-    cout<<"14. Find Shortest Path\n";
+    cout << "14. Find Shortest Path\n";
 
-    cout<<"15. Display Computers\n";
+    cout << "15. Display Computers\n";
 
-    cout<<"16. Exit\n";
+    cout << "16. Exit\n";
 
-    cout<<YELLOW<<"Choice : "<<RESET;
+    cout << YELLOW << "Choice : " << RESET;
 }
-
-// Program execution starts here
-
 
 void displayBanner()
 {
@@ -1045,107 +964,107 @@ void displayBanner()
     cout << RESET;
 }
 
+// Program execution starts here
+
 int main()
 {
     displayBanner();
     int choice;
 
-    while(true)
+    while (true)
     {
         menu();
 
-        cin>>choice;
+        cin >> choice;
 
-        switch(choice)
+        switch (choice)
         {
-            case 1:
-                addComputer();
-                break;
+        case 1:
+            addComputer();
+            break;
 
-            case 2:
-                verifyComputer();
-                break;
+        case 2:
+            verifyComputer();
+            break;
 
-            case 3:
-                allocateMemory();
-                break;
+        case 3:
+            allocateMemory();
+            break;
 
-            case 4:
-                searchMemoryBlock();
-                break;
+        case 4:
+            searchMemoryBlock();
+            break;
 
-            case 5:
-                displayMemoryBlocks();
-                break;
+        case 5:
+            displayMemoryBlocks();
+            break;
 
-            case 6:
-                moveBlock();
-                break;
+        case 6:
+            moveBlock();
+            break;
 
-            case 7:
-                undoOperation();
-                break;
+        case 7:
+            undoOperation();
+            break;
 
-            case 8:
-            {
-                int rid;
-                int cid;
-                int bid;
+        case 8:
+        {
+            int rid;
+            int cid;
+            int bid;
 
-                cout<<"Request ID : ";
-                cin>>rid;
+            cout << "Request ID : ";
+            cin >> rid;
 
-                cout<<"Computer ID : ";
-                cin>>cid;
+            cout << "Computer ID : ";
+            cin >> cid;
 
-                cout<<"Block ID : ";
-                cin>>bid;
+            cout << "Block ID : ";
+            cin >> bid;
 
-                addRequest(
-                    rid,
-                    cid,
-                    bid);
+            addRequest(rid, cid, bid);
 
-                break;
-            }
+            break;
+        }
 
-            case 9:
-                processRequest();
-                break;
+        case 9:
+            processRequest();
+            break;
 
-            case 10:
-                accessMemoryBlock();
-                break;
+        case 10:
+            accessMemoryBlock();
+            break;
 
-            case 11:
-                showMostUsedBlocks();
-                break;
+        case 11:
+            showMostUsedBlocks();
+            break;
 
-            case 12:
-                addConnection();
-                break;
+        case 12:
+            addConnection();
+            break;
 
-            case 13:
-                displayNetwork();
-                break;
+        case 13:
+            displayNetwork();
+            break;
 
-            case 14:
-                shortestPath();
-                break;
+        case 14:
+            shortestPath();
+            break;
 
-            case 15:
-                displayComputers();
-                break;
+        case 15:
+            displayComputers();
+            break;
 
-            case 16:
-                cout<<MAGENTA<<"Program Ended\n"<<RESET;
-                return 0;
+        case 16:
+            cout << MAGENTA << "Program Ended\n"
+                 << RESET;
+            return 0;
 
-            default:
-                cout<<RED<<"Invalid Choice\n"<<RESET;
+        default:
+            cout << RED << "Invalid Choice\n"
+                 << RESET;
         }
     }
 
     return 0;
 }
-
